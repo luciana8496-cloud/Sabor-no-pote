@@ -1,0 +1,6 @@
+{
+  "name": "Sabor no Pote - Cardápio Digital & Pedidos",
+  "description": "Cardápio digital e sistema de pedidos online do Sabor no Pote. Sabor que conquista em cada pote!",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
