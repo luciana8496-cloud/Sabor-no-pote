@@ -118,7 +118,7 @@ export const StoreSettingsModal: React.FC<StoreSettingsModalProps> = ({ isOpen, 
                   instagramHandle: e.target.value.trim() ? e.target.value : null,
                 })
               }
-              placeholder="Ex: @sabornopote"
+              placeholder="Ex: @sabornopoteoficialdf"
               className="w-full px-3 py-2 rounded-xl bg-white border border-[#E8E2D5] text-xs text-[#171717] placeholder-neutral-400 focus:outline-none focus:border-[#FF981B]"
             />
           </div>

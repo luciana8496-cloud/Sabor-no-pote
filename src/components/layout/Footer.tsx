@@ -33,16 +33,44 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSettings }) => {
     }
   };
 
+  // Tratamento do Instagram oficial
+  const rawHandle = (settings.instagramHandle || '@sabornopoteoficialdf').trim();
+  const cleanHandle =
+    rawHandle
+      .replace(/^https?:\/\/(www\.)?instagram\.com\//i, '')
+      .replace(/^@/, '')
+      .replace(/\/$/, '') || 'sabornopoteoficialdf';
+  const displayHandle = `@${cleanHandle}`;
+  const instagramUrl = `https://www.instagram.com/${cleanHandle}/`;
+
   return (
     <footer id="contato" className="scroll-mt-20 md:scroll-mt-24 bg-[#FFFCF7] border-t border-[#F0EBE1] text-[#555555]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Column 1: Brand & Logo */}
-          <div className="md:col-span-1 space-y-3">
+          <div className="md:col-span-1 space-y-4">
             <Logo variant="horizontal" size="md" />
-            <p className="text-xs text-[#555555] leading-relaxed mt-3">
+            <p className="text-xs text-[#555555] leading-relaxed">
               Gastronomia artesanal no pote. Sabor que conquista em cada pote!
             </p>
+            {/* Instagram Oficial da Marca com Ícone Oficial */}
+            <div className="pt-1">
+              <a
+                href={instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#FFF7E9] border border-[#FFBF32]/40 text-[#171717] hover:bg-[#FFBF32]/25 hover:border-[#FF981B] transition-all group cursor-pointer"
+                title={`Siga o Sabor no Pote no Instagram (${displayHandle})`}
+              >
+                <div className="w-6 h-6 rounded-lg bg-[#FF981B] flex items-center justify-center text-white group-hover:scale-105 transition-transform">
+                  <Instagram className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <span className="block text-[10px] text-[#777777] uppercase tracking-wider font-semibold">Instagram Oficial</span>
+                  <span className="text-xs font-bold text-[#171717] group-hover:text-[#FF981B]">{displayHandle}</span>
+                </div>
+              </a>
+            </div>
           </div>
 
           {/* Column 2: Links de Navegação */}
@@ -129,23 +157,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSettings }) => {
                 </div>
               </div>
 
-              {/* Instagram */}
+              {/* Instagram na Seção de Contato */}
               <div className="flex items-start gap-2.5">
                 <Instagram className="w-4 h-4 text-[#FF981B] shrink-0 mt-0.5" />
                 <div>
-                  <span className="block font-semibold text-[#171717]">Instagram:</span>
-                  {settings.instagramHandle ? (
-                    <a
-                      href={`https://instagram.com/${settings.instagramHandle.replace('@', '')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#FF981B] font-medium hover:underline"
-                    >
-                      {settings.instagramHandle}
-                    </a>
-                  ) : (
-                    <span className="text-neutral-400 italic">Em breve nas redes sociais</span>
-                  )}
+                  <span className="block font-semibold text-[#171717]">Instagram Oficial:</span>
+                  <a
+                    href={instagramUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#FF981B] font-semibold hover:underline inline-flex items-center gap-1"
+                    title={`Acessar perfil oficial: ${displayHandle}`}
+                  >
+                    <span>{displayHandle}</span>
+                  </a>
                 </div>
               </div>
 
@@ -182,22 +207,39 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSettings }) => {
           </div>
         </div>
 
-        {/* Linha Divisória e Copyright Obrigatório com Acesso Seguro */}
+        {/* Linha Divisória e Copyright Obrigatório com Acesso Seguro e Instagram no Rodapé */}
         <div className="mt-12 pt-6 border-t border-[#F0EBE1] flex flex-col sm:flex-row items-center justify-between text-xs text-[#777777] gap-3">
           <p>© Sabor no Pote — Todos os direitos reservados.</p>
-          <a
-            href="#admin"
-            onClick={(e) => {
-              e.preventDefault();
-              window.location.hash = '#admin';
-              window.dispatchEvent(new HashChangeEvent('hashchange'));
-            }}
-            className="inline-flex items-center gap-1.5 text-[11px] text-[#888888] hover:text-[#171717] transition-colors py-1 px-2 rounded-md hover:bg-neutral-100 cursor-pointer"
-            title="Acesso Exclusivo da Proprietária"
-          >
-            <Lock className="w-3 h-3 text-[#FF981B]" />
-            <span>Acesso Administrativo</span>
-          </a>
+
+          <div className="flex items-center gap-4">
+            {/* Instagram no Rodapé */}
+            <a
+              href={instagramUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] text-[#555555] hover:text-[#FF981B] transition-colors font-medium"
+              title={`Perfil oficial no Instagram: ${displayHandle}`}
+            >
+              <Instagram className="w-3.5 h-3.5 text-[#FF981B]" />
+              <span>{displayHandle}</span>
+            </a>
+
+            <span className="text-[#D5CBB9]">•</span>
+
+            <a
+              href="#admin"
+              onClick={(e) => {
+                e.preventDefault();
+                window.location.hash = '#admin';
+                window.dispatchEvent(new HashChangeEvent('hashchange'));
+              }}
+              className="inline-flex items-center gap-1.5 text-[11px] text-[#888888] hover:text-[#171717] transition-colors py-1 px-2 rounded-md hover:bg-neutral-100 cursor-pointer"
+              title="Acesso Exclusivo da Proprietária"
+            >
+              <Lock className="w-3 h-3 text-[#FF981B]" />
+              <span>Acesso Administrativo</span>
+            </a>
+          </div>
         </div>
       </div>
     </footer>

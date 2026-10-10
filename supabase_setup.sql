@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
     id TEXT PRIMARY KEY DEFAULT 'default',
     store_name TEXT NOT NULL DEFAULT 'SABOR NO POTE',
     whatsapp_number TEXT,
-    instagram_handle TEXT,
+    instagram_handle TEXT DEFAULT '@sabornopoteoficialdf',
     address TEXT,
     opening_hours TEXT,
     delivery_fee NUMERIC(10, 2) NOT NULL DEFAULT 5.00 CHECK (delivery_fee >= 0),
@@ -94,10 +94,11 @@ CREATE TABLE IF NOT EXISTS public.store_settings (
     CONSTRAINT single_store_settings CHECK (id = 'default')
 );
 
--- Inserir configuração padrão inicial se não existir
-INSERT INTO public.store_settings (id, store_name, delivery_fee)
-VALUES ('default', 'SABOR NO POTE', 5.00)
-ON CONFLICT (id) DO NOTHING;
+-- Inserir configuração padrão inicial com Instagram oficial
+INSERT INTO public.store_settings (id, store_name, instagram_handle, delivery_fee)
+VALUES ('default', 'SABOR NO POTE', '@sabornopoteoficialdf', 5.00)
+ON CONFLICT (id) DO UPDATE
+SET instagram_handle = COALESCE(public.store_settings.instagram_handle, '@sabornopoteoficialdf');
 
 -- ==============================================================================
 -- 5. CATEGORIAS DE PRODUTOS

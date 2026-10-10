@@ -1246,7 +1246,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
                   onChange={(e) =>
                     setSettingsForm({ ...settingsForm, instagramHandle: e.target.value })
                   }
-                  placeholder="@sabornopote.oficial"
+                  placeholder="@sabornopoteoficialdf"
                   className="w-full px-4 py-2.5 rounded-xl bg-[#FFFCF7] border border-[#EAE3D2] text-xs text-[#171717] focus:outline-none focus:border-[#FF981B]"
                 />
               </div>

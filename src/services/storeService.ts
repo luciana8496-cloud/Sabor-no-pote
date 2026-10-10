@@ -23,7 +23,7 @@ const STORAGE_KEYS = {
 const DEFAULT_SETTINGS: StoreSettings = {
   storeName: 'SABOR NO POTE',
   whatsappNumber: null, // Unconfigured initially per requirement
-  instagramHandle: null, // Unconfigured initially
+  instagramHandle: '@sabornopoteoficialdf', // Instagram oficial do Sabor no Pote
   openingHours: null,
   address: null,
   deliveryFee: 5.0,
@@ -39,7 +39,12 @@ export const getStoreSettings = (): StoreSettings => {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.SETTINGS);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      instagramHandle: parsed.instagramHandle || DEFAULT_SETTINGS.instagramHandle,
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }
@@ -91,7 +96,7 @@ export const syncStoreSettingsFromSupabase = async (): Promise<StoreSettings> =>
     const remoteSettings: StoreSettings = {
       storeName: data.store_name || 'SABOR NO POTE',
       whatsappNumber: data.whatsapp_number,
-      instagramHandle: data.instagram_handle,
+      instagramHandle: data.instagram_handle || '@sabornopoteoficialdf',
       openingHours: data.opening_hours,
       address: data.address,
       deliveryFee: Number(data.delivery_fee) || 5.0,
