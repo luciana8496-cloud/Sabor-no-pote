@@ -32,6 +32,7 @@ import {
   Eye,
   EyeOff,
   Flame,
+  Calculator,
 } from 'lucide-react';
 import {
   getProducts,
@@ -60,8 +61,9 @@ import {
   ProductFlavor,
 } from '../../types/store';
 import { runFullSupabaseDiagnostics, FullDiagnosticReport } from '../../lib/supabase';
+import { PricingManagement } from './PricingManagement';
 
-type AdminTab = 'overview' | 'orders' | 'menu' | 'settings' | 'supabase';
+type AdminTab = 'overview' | 'orders' | 'menu' | 'pricing' | 'settings' | 'supabase';
 
 interface AdminDashboardProps {
   onBackToPublic: () => void;
@@ -482,6 +484,18 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
             <UtensilsCrossed className="w-4 h-4" />
             <span>Cardápio & Produtos</span>
             <span className="text-[10px] opacity-75 font-normal">({products.length})</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('pricing')}
+            className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+              activeTab === 'pricing'
+                ? 'bg-[#171717] text-white shadow-xs'
+                : 'text-neutral-600 hover:text-[#171717] hover:bg-neutral-100'
+            }`}
+          >
+            <Calculator className="w-4 h-4 text-amber-500" />
+            <span>Precificação & Ficha Técnica</span>
           </button>
 
           <button
@@ -1340,6 +1354,17 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
               </div>
             </form>
           </div>
+        )}
+
+        {/* ========================================================== */}
+        {/* TAB: PRECIFICAÇÃO & FICHA TÉCNICA */}
+        {/* ========================================================== */}
+        {activeTab === 'pricing' && (
+          <PricingManagement
+            products={products}
+            categories={categories}
+            onCatalogUpdated={reloadData}
+          />
         )}
 
         {/* ========================================================== */}

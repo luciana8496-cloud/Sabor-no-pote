@@ -280,6 +280,56 @@ CREATE TABLE IF NOT EXISTS public.financial_transactions (
 );
 
 -- ==============================================================================
+-- 9.1 MÓDULO DE PRECIFICAÇÃO E FICHA TÉCNICA (INSUMOS, RECEITAS, DESPESAS E CONFIGURAÇÕES)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.ingredients (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    category TEXT,
+    purchase_quantity NUMERIC(12, 3) NOT NULL CHECK (purchase_quantity > 0),
+    purchase_unit TEXT NOT NULL CHECK (purchase_unit IN ('kg', 'g', 'L', 'ml', 'un')),
+    purchase_price NUMERIC(10, 2) NOT NULL CHECK (purchase_price >= 0),
+    unit_cost NUMERIC(12, 4) GENERATED ALWAYS AS (purchase_price / NULLIF(purchase_quantity, 0)) STORED,
+    supplier TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.product_recipes (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID REFERENCES public.products(id) ON DELETE CASCADE NOT NULL,
+    variation_id UUID REFERENCES public.product_variations(id) ON DELETE CASCADE,
+    ingredient_id UUID REFERENCES public.ingredients(id) ON DELETE CASCADE NOT NULL,
+    quantity_used NUMERIC(12, 4) NOT NULL CHECK (quantity_used > 0),
+    unit TEXT NOT NULL CHECK (unit IN ('g', 'ml', 'un')),
+    waste_percentage NUMERIC(5, 2) NOT NULL DEFAULT 0.00 CHECK (waste_percentage >= 0 AND waste_percentage < 100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.production_expenses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('fixed_monthly', 'variable_batch', 'percentage')),
+    amount NUMERIC(10, 2) NOT NULL CHECK (amount >= 0),
+    allocation_basis TEXT NOT NULL DEFAULT 'per_unit' CHECK (allocation_basis IN ('per_unit', 'percentage_sale', 'fixed')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.product_pricing_config (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    product_id UUID REFERENCES public.products(id) ON DELETE CASCADE NOT NULL,
+    variation_id UUID REFERENCES public.product_variations(id) ON DELETE CASCADE,
+    packaging_cost NUMERIC(10, 2) NOT NULL DEFAULT 0.00 CHECK (packaging_cost >= 0),
+    desired_margin NUMERIC(5, 2) NOT NULL DEFAULT 30.00 CHECK (desired_margin >= 0 AND desired_margin < 100),
+    pricing_method TEXT NOT NULL DEFAULT 'margin' CHECK (pricing_method IN ('margin', 'markup')),
+    card_fee_percentage NUMERIC(5, 2) NOT NULL DEFAULT 0.00 CHECK (card_fee_percentage >= 0),
+    suggested_price NUMERIC(10, 2) DEFAULT 0.00,
+    current_catalog_price NUMERIC(10, 2) DEFAULT 0.00,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(product_id, variation_id)
+);
+
+-- ==============================================================================
 -- 10. FUNÇÃO SEGURA RPC PARA PEDIDOS ANÔNIMOS (SUBMIT_ORDER)
 -- ==============================================================================
 -- Esta função substitui qualquer inserção direta não controlada via cliente.
@@ -778,6 +828,10 @@ ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.order_submission_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.financial_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ingredients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_recipes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.production_expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_pricing_config ENABLE ROW LEVEL SECURITY;
 
 -- Limpar políticas antigas para evitar conflitos de nomenclatura
 DROP POLICY IF EXISTS "Admins podem visualizar administradores" ON public.admins;
@@ -1056,6 +1110,30 @@ CREATE POLICY "Acesso exclusivo ao estoque para admin"
 
 CREATE POLICY "Acesso exclusivo ao financeiro para admin"
     ON public.financial_transactions FOR ALL
+    TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Acesso exclusivo aos insumos para admin"
+    ON public.ingredients FOR ALL
+    TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Acesso exclusivo às receitas para admin"
+    ON public.product_recipes FOR ALL
+    TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Acesso exclusivo às despesas para admin"
+    ON public.production_expenses FOR ALL
+    TO authenticated
+    USING (public.is_admin())
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Acesso exclusivo à precificação para admin"
+    ON public.product_pricing_config FOR ALL
     TO authenticated
     USING (public.is_admin())
     WITH CHECK (public.is_admin());
