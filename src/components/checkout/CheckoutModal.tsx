@@ -38,7 +38,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOpenSettings }) 
   } = useCart();
 
   const [customer, setCustomer] = useState<CustomerData>({ name: '', phone: '' });
-  const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery');
+  const [deliveryType, setDeliveryType] = useState<DeliveryType>(() =>
+    getStoreSettings().isDeliveryAvailable ? 'delivery' : 'pickup'
+  );
   const [address, setAddress] = useState<DeliveryAddress>({
     cep: '',
     street: '',
@@ -102,6 +104,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOpenSettings }) 
     }
 
     if (deliveryType === 'delivery') {
+      if (!storeSettings.isDeliveryAvailable) {
+        errors.delivery = 'A entrega em domicílio ainda não foi disponibilizada ou configurada. Selecione retirada no local.';
+      }
       if (!address.street.trim()) {
         errors.street = 'Informe o logradouro / endereço.';
       }
@@ -371,23 +376,35 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOpenSettings }) 
               2. Forma de Recebimento
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
-              <button
-                type="button"
-                onClick={() => setDeliveryType('delivery')}
-                className={`p-3.5 rounded-2xl border flex items-center gap-3 transition-all cursor-pointer text-left ${
-                  deliveryType === 'delivery'
-                    ? 'bg-[#FFF7E9] border-[#FF981B] text-[#171717] shadow-xs'
-                    : 'bg-white border-[#E8E2D5] text-[#555555] hover:border-[#FFBF32]'
-                }`}
-              >
-                <MapPin className="w-5 h-5 text-[#FF981B] shrink-0" />
-                <div>
-                  <span className="block text-xs font-bold text-[#171717]">Entrega em Domicílio</span>
-                  <span className="block text-[11px] text-[#555555] mt-0.5">
-                    Taxa: R$ {deliveryFee.toFixed(2).replace('.', ',')}
-                  </span>
+              {storeSettings.isDeliveryAvailable ? (
+                <button
+                  type="button"
+                  onClick={() => setDeliveryType('delivery')}
+                  className={`p-3.5 rounded-2xl border flex items-center gap-3 transition-all cursor-pointer text-left ${
+                    deliveryType === 'delivery'
+                      ? 'bg-[#FFF7E9] border-[#FF981B] text-[#171717] shadow-xs'
+                      : 'bg-white border-[#E8E2D5] text-[#555555] hover:border-[#FFBF32]'
+                  }`}
+                >
+                  <MapPin className="w-5 h-5 text-[#FF981B] shrink-0" />
+                  <div>
+                    <span className="block text-xs font-bold text-[#171717]">Entrega em Domicílio</span>
+                    <span className="block text-[11px] text-[#555555] mt-0.5">
+                      Taxa: R$ {deliveryFee.toFixed(2).replace('.', ',')}
+                    </span>
+                  </div>
+                </button>
+              ) : (
+                <div className="p-3.5 rounded-2xl border border-dashed border-[#E8E2D5] bg-[#FAF8F5] flex items-center gap-3 text-neutral-400">
+                  <MapPin className="w-5 h-5 text-neutral-400 shrink-0" />
+                  <div>
+                    <span className="block text-xs font-bold text-neutral-500">Entrega em Domicílio</span>
+                    <span className="block text-[11px] text-neutral-400 mt-0.5">
+                      Aguardando configuração pela loja
+                    </span>
+                  </div>
                 </div>
-              </button>
+              )}
 
               <button
                 type="button"

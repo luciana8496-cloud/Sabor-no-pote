@@ -28,11 +28,11 @@ export const StoreSettingsModal: React.FC<StoreSettingsModalProps> = ({ isOpen, 
     const defaultSettings: StoreSettings = {
       storeName: 'SABOR NO POTE',
       whatsappNumber: null,
-      instagramHandle: null,
+      instagramHandle: '@sabornopoteoficialdf',
       openingHours: null,
       address: null,
-      deliveryFee: 5.00,
-      isDeliveryAvailable: true,
+      deliveryFee: 0.00,
+      isDeliveryAvailable: false,
       isPickupAvailable: true,
     };
     setSettings(defaultSettings);

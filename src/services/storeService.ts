@@ -2,6 +2,7 @@ import {
   Category,
   Product,
   ProductVariation,
+  ProductFlavor,
   ProductExtra,
   StoreSettings,
   OrderRecord,
@@ -26,8 +27,8 @@ const DEFAULT_SETTINGS: StoreSettings = {
   instagramHandle: '@sabornopoteoficialdf', // Instagram oficial do Sabor no Pote
   openingHours: null,
   address: null,
-  deliveryFee: 5.0,
-  isDeliveryAvailable: true,
+  deliveryFee: 0.0,
+  isDeliveryAvailable: false, // Entrega não disponibilizada inicialmente até a proprietária configurar
   isPickupAvailable: true,
 };
 
@@ -99,8 +100,13 @@ export const syncStoreSettingsFromSupabase = async (): Promise<StoreSettings> =>
       instagramHandle: data.instagram_handle || '@sabornopoteoficialdf',
       openingHours: data.opening_hours,
       address: data.address,
-      deliveryFee: Number(data.delivery_fee) || 5.0,
-      isDeliveryAvailable: data.is_delivery_available ?? true,
+      deliveryFee:
+        typeof data.delivery_fee === 'number'
+          ? data.delivery_fee
+          : data.delivery_fee !== null && data.delivery_fee !== undefined
+          ? Number(data.delivery_fee)
+          : 0.0,
+      isDeliveryAvailable: data.is_delivery_available ?? false,
       isPickupAvailable: data.is_pickup_available ?? true,
     };
 
@@ -243,6 +249,17 @@ export const saveProduct = async (product: Product): Promise<Product[]> => {
         }));
         await supabase.from('product_extras').insert(extrasPayload);
       }
+
+      if (!prodErr && insertedProduct && product.flavors && product.flavors.length > 0) {
+        // Upsert flavors
+        await supabase.from('product_flavors').delete().eq('product_id', insertedProduct.id);
+        const flavorsPayload = product.flavors.map((f) => ({
+          product_id: insertedProduct.id,
+          name: f.name,
+          available: f.available,
+        }));
+        await supabase.from('product_flavors').insert(flavorsPayload);
+      }
     } catch (err) {
       console.warn('Falha ao persistir produto no Supabase:', err);
     }
@@ -301,10 +318,10 @@ export const syncCatalogFromSupabase = async (): Promise<{
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
     }
 
-    // 2. Fetch products with variations and extras
+    // 2. Fetch products with variations, flavors and extras
     const { data: prodData, error: prodErr } = await supabase
       .from('products')
-      .select('*, product_variations(*), product_extras(*)')
+      .select('*, product_variations(*), product_flavors(*), product_extras(*)')
       .order('name', { ascending: true });
 
     let products: Product[] = getProducts();
@@ -315,6 +332,12 @@ export const syncCatalogFromSupabase = async (): Promise<{
           name: v.name,
           price: Number(v.price),
           description: v.description || undefined,
+        }));
+
+        const flavors: ProductFlavor[] = (p.product_flavors || []).map((f: any) => ({
+          id: f.id,
+          name: f.name,
+          available: f.available,
         }));
 
         const extras: ProductExtra[] = (p.product_extras || []).map((e: any) => ({
@@ -335,6 +358,7 @@ export const syncCatalogFromSupabase = async (): Promise<{
           available: p.available,
           tags: p.tags || [],
           sizes,
+          flavors,
           extras,
         };
       });
@@ -427,6 +451,13 @@ export const saveOrder = async (
         notes: i.notes || null,
       }));
 
+      // Obter ou gerar token único de cliente no localStorage para proteção contra spam/abuso
+      let clientToken = localStorage.getItem('sabor_no_pote_client_token');
+      if (!clientToken) {
+        clientToken = 'cli_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+        localStorage.setItem('sabor_no_pote_client_token', clientToken);
+      }
+
       const { data: rpcData, error: rpcErr } = await supabase.rpc('submit_order', {
         p_customer_name: checkout.customer.name,
         p_customer_phone: checkout.customer.phone,
@@ -437,6 +468,7 @@ export const saveOrder = async (
         p_cash_change_for: checkout.cashChangeFor ? parseFloat(checkout.cashChangeFor) : null,
         p_order_notes: checkout.orderNotes || null,
         p_items: itemsPayload,
+        p_client_token: clientToken,
       });
 
       if (!rpcErr && rpcData && rpcData.order_id) {

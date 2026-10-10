@@ -1499,11 +1499,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onBackToPublic }
                     3. Vincular a Proprietária na Tabela <code>public.admins</code>
                   </span>
                   <p>
-                    Execute o seguinte comando no SQL Editor do Supabase substituindo o UID e seu e-mail:
+                    Execute o seguinte comando no SQL Editor do Supabase substituindo pelo seu e-mail cadastrado:
                   </p>
                   <pre className="p-3 rounded-xl bg-[#171717] text-[#FFD447] font-mono text-[11px] overflow-x-auto">
-{`INSERT INTO public.admins (user_id, email, name, role)
-VALUES ('SEU_USER_UID_AQUI', 'contato@sabornopote.com.br', 'Proprietária Sabor no Pote', 'owner');`}
+{`INSERT INTO public.admins (user_id, email, name, role, is_active)
+SELECT id, email, 'Proprietária Sabor no Pote', 'owner', true
+FROM auth.users
+WHERE email = 'seu_email@exemplo.com'
+ON CONFLICT (user_id) DO NOTHING;`}
                   </pre>
                 </div>
 
