@@ -406,50 +406,48 @@ export const saveOrder = async (
   localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(updatedOrders));
   window.dispatchEvent(new Event('orders_updated'));
 
-  // 2. Insert into Supabase if configured (Allowed by anon INSERT RLS policy)
+  // 2. Persistir no Supabase via RPC segura com validação e cálculo no servidor
   if (isSupabaseConfigured()) {
     try {
-      const { data: insertedOrder, error: orderErr } = await supabase
-        .from('orders')
-        .insert({
-          customer_name: checkout.customer.name,
-          customer_phone: checkout.customer.phone,
-          delivery_type: checkout.deliveryType,
-          address_data: checkout.address || null,
-          payment_method: checkout.paymentMethod,
-          needs_cash_change: checkout.needsCashChange || false,
-          cash_change_for: checkout.cashChangeFor ? parseFloat(checkout.cashChangeFor) : null,
-          subtotal,
-          delivery_fee: deliveryFee,
-          total_price: totalPrice,
-          status: 'pending',
-          order_notes: checkout.orderNotes || null,
-        })
-        .select()
-        .single();
+      const itemsPayload = items.map((i) => ({
+        product_id: i.productId.startsWith('prod-') ? null : i.productId,
+        product_name: i.productName,
+        size_name: i.selectedSize?.name || null,
+        flavor_name: i.selectedFlavor?.name || null,
+        extras: (i.selectedExtras || []).map((e) => ({
+          name: e.extra.name,
+          quantity: e.quantity,
+        })),
+        quantity: i.quantity,
+        notes: i.notes || null,
+      }));
 
-      if (!orderErr && insertedOrder) {
-        // Insert order items
-        const itemsPayload = items.map((i) => ({
-          order_id: insertedOrder.id,
-          product_id: i.productId.startsWith('prod-') ? null : i.productId,
-          product_name: i.productName,
-          quantity: i.quantity,
-          unit_price: i.unitPrice,
-          total_price: i.totalPrice,
-          configuration: {
-            size: i.selectedSize?.name,
-            flavor: i.selectedFlavor?.name,
-            extras: i.selectedExtras?.map((e) => `${e.extra.name} (${e.quantity}x)`),
-            notes: i.notes,
-          },
-        }));
+      const { data: rpcData, error: rpcErr } = await supabase.rpc('submit_order', {
+        p_customer_name: checkout.customer.name,
+        p_customer_phone: checkout.customer.phone,
+        p_delivery_type: checkout.deliveryType,
+        p_address_data: checkout.deliveryType === 'delivery' ? (checkout.address || null) : null,
+        p_payment_method: checkout.paymentMethod,
+        p_needs_cash_change: checkout.needsCashChange || false,
+        p_cash_change_for: checkout.cashChangeFor ? parseFloat(checkout.cashChangeFor) : null,
+        p_order_notes: checkout.orderNotes || null,
+        p_items: itemsPayload,
+      });
 
-        await supabase.from('order_items').insert(itemsPayload);
-        return { success: true, orderId: insertedOrder.id };
+      if (!rpcErr && rpcData && rpcData.order_id) {
+        orderRecord.id = rpcData.order_id;
+        if (typeof rpcData.subtotal === 'number') orderRecord.subtotal = rpcData.subtotal;
+        if (typeof rpcData.delivery_fee === 'number') orderRecord.deliveryFee = rpcData.delivery_fee;
+        if (typeof rpcData.total_price === 'number') orderRecord.totalPrice = rpcData.total_price;
+        localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify([orderRecord, ...currentOrders]));
+        return { success: true, orderId: rpcData.order_id };
+      }
+
+      if (rpcErr) {
+        console.warn('Aviso ao submeter pedido via RPC do Supabase:', rpcErr.message || rpcErr);
       }
     } catch (err) {
-      console.warn('Erro ao inserir pedido no Supabase:', err);
+      console.warn('Erro ao processar pedido no Supabase:', err);
     }
   }
 

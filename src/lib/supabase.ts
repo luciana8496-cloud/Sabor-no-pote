@@ -170,7 +170,7 @@ export const runFullSupabaseDiagnostics = async (): Promise<FullDiagnosticReport
         name: 'Tabela orders & RLS',
         status: 'warning',
         message: `Aviso na tabela orders: ${ordersError.message}`,
-        details: 'Clientes anônimos possuem permissão de inserção (INSERT). Leitura (SELECT) requer autenticação de administrador.',
+        details: 'Acesso restrito por RLS. Leitura e gestão exclusivas da administradora autenticada. Criação pública segura via função RPC submit_order com cálculo no servidor.',
       });
     } else {
       items.push({
