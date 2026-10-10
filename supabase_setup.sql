@@ -815,13 +815,27 @@ DROP POLICY IF EXISTS "Clientes podem criar pedidos" ON public.orders;
 DROP POLICY IF EXISTS "Admins podem gerenciar todos os pedidos" ON public.orders;
 DROP POLICY IF EXISTS "Bloquear insercao direta anonima em orders" ON public.orders;
 DROP POLICY IF EXISTS "Bloquear insercao direta de pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Bloquear leitura direta de pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Bloquear atualizacao direta de pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Bloquear exclusao direta de pedidos" ON public.orders;
 DROP POLICY IF EXISTS "Apenas admin pode visualizar e gerenciar pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Admin pode consultar pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Admin pode inserir pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Admin pode atualizar pedidos" ON public.orders;
+DROP POLICY IF EXISTS "Admin pode excluir pedidos" ON public.orders;
 
 DROP POLICY IF EXISTS "Clientes podem criar itens do pedido" ON public.order_items;
 DROP POLICY IF EXISTS "Admins podem gerenciar todos os itens do pedido" ON public.order_items;
 DROP POLICY IF EXISTS "Bloquear insercao direta em order_items" ON public.order_items;
 DROP POLICY IF EXISTS "Bloquear insercao direta de itens" ON public.order_items;
+DROP POLICY IF EXISTS "Bloquear leitura direta de itens" ON public.order_items;
+DROP POLICY IF EXISTS "Bloquear atualizacao direta de itens" ON public.order_items;
+DROP POLICY IF EXISTS "Bloquear exclusao direta de itens" ON public.order_items;
 DROP POLICY IF EXISTS "Apenas admin pode visualizar e gerenciar itens" ON public.order_items;
+DROP POLICY IF EXISTS "Admin pode consultar itens do pedido" ON public.order_items;
+DROP POLICY IF EXISTS "Admin pode inserir itens do pedido" ON public.order_items;
+DROP POLICY IF EXISTS "Admin pode atualizar itens do pedido" ON public.order_items;
+DROP POLICY IF EXISTS "Admin pode excluir itens do pedido" ON public.order_items;
 
 DROP POLICY IF EXISTS "Acesso exclusivo aos logs para admin" ON public.order_submission_logs;
 DROP POLICY IF EXISTS "Acesso exclusivo de administradores ao estoque" ON public.inventory_items;
@@ -934,34 +948,96 @@ CREATE POLICY "Apenas admin pode gerenciar adicionais"
     WITH CHECK (public.is_admin());
 
 -- -----------------------------------------------------------------------------
--- 11.6 POLÍTICAS PARA ORDERS (SEM WITH CHECK TRUE IRRESTRITO)
+-- 11.6 POLÍTICAS PARA ORDERS (EXPLICITAS E SEGURAS)
 -- -----------------------------------------------------------------------------
--- Bloquear totalmente inserção direta via cliente: todo pedido é processado via submit_order()
+-- Bloquear inserção, leitura, atualização e exclusão direta por anon e authenticated comuns
 CREATE POLICY "Bloquear insercao direta de pedidos"
     ON public.orders FOR INSERT
     TO anon, authenticated
     WITH CHECK (false);
 
--- Apenas a proprietária/administradora autenticada pode ler e gerenciar pedidos
-CREATE POLICY "Apenas admin pode visualizar e gerenciar pedidos"
-    ON public.orders FOR ALL
+CREATE POLICY "Bloquear leitura direta de pedidos"
+    ON public.orders FOR SELECT
+    TO anon, authenticated
+    USING (false);
+
+CREATE POLICY "Bloquear atualizacao direta de pedidos"
+    ON public.orders FOR UPDATE
+    TO anon, authenticated
+    USING (false);
+
+CREATE POLICY "Bloquear exclusao direta de pedidos"
+    ON public.orders FOR DELETE
+    TO anon, authenticated
+    USING (false);
+
+-- Políticas explícitas para a proprietária / administradores em orders
+CREATE POLICY "Admin pode consultar pedidos"
+    ON public.orders FOR SELECT
+    TO authenticated
+    USING (public.is_admin());
+
+CREATE POLICY "Admin pode inserir pedidos"
+    ON public.orders FOR INSERT
+    TO authenticated
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admin pode atualizar pedidos"
+    ON public.orders FOR UPDATE
     TO authenticated
     USING (public.is_admin())
     WITH CHECK (public.is_admin());
 
+CREATE POLICY "Admin pode excluir pedidos"
+    ON public.orders FOR DELETE
+    TO authenticated
+    USING (public.is_admin());
+
 -- -----------------------------------------------------------------------------
--- 11.7 POLÍTICAS PARA ORDER_ITEMS
+-- 11.7 POLÍTICAS PARA ORDER_ITEMS (EXPLICITAS E SEGURAS)
 -- -----------------------------------------------------------------------------
+-- Bloquear inserção, leitura, atualização e exclusão direta por anon e authenticated comuns
 CREATE POLICY "Bloquear insercao direta de itens"
     ON public.order_items FOR INSERT
     TO anon, authenticated
     WITH CHECK (false);
 
-CREATE POLICY "Apenas admin pode visualizar e gerenciar itens"
-    ON public.order_items FOR ALL
+CREATE POLICY "Bloquear leitura direta de itens"
+    ON public.order_items FOR SELECT
+    TO anon, authenticated
+    USING (false);
+
+CREATE POLICY "Bloquear atualizacao direta de itens"
+    ON public.order_items FOR UPDATE
+    TO anon, authenticated
+    USING (false);
+
+CREATE POLICY "Bloquear exclusao direta de itens"
+    ON public.order_items FOR DELETE
+    TO anon, authenticated
+    USING (false);
+
+-- Políticas explícitas para a proprietária / administradores em order_items
+CREATE POLICY "Admin pode consultar itens do pedido"
+    ON public.order_items FOR SELECT
+    TO authenticated
+    USING (public.is_admin());
+
+CREATE POLICY "Admin pode inserir itens do pedido"
+    ON public.order_items FOR INSERT
+    TO authenticated
+    WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admin pode atualizar itens do pedido"
+    ON public.order_items FOR UPDATE
     TO authenticated
     USING (public.is_admin())
     WITH CHECK (public.is_admin());
+
+CREATE POLICY "Admin pode excluir itens do pedido"
+    ON public.order_items FOR DELETE
+    TO authenticated
+    USING (public.is_admin());
 
 -- -----------------------------------------------------------------------------
 -- 11.8 POLÍTICAS PARA LOGS DE SUBMISSÃO, ESTOQUE E FINANCEIRO
