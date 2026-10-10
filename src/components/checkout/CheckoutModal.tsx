@@ -19,7 +19,7 @@ import {
   DeliveryAddress,
   CustomerData,
 } from '../../types/store';
-import { getStoreSettings } from '../../services/storeService';
+import { getStoreSettings, saveOrder } from '../../services/storeService';
 
 interface CheckoutModalProps {
   onOpenSettings: () => void;
@@ -209,7 +209,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOpenSettings }) 
     e.preventDefault();
 
     if (items.length === 0) {
-      alert('Seu carrinho está vazio.');
+      setFormErrors((prev) => ({ ...prev, cart: 'Seu carrinho está vazio.' }));
       return;
     }
 
@@ -225,6 +225,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({ onOpenSettings }) 
       }));
       return;
     }
+
+    // Persist order with configuration and items to Supabase / database
+    saveOrder(
+      {
+        customer,
+        deliveryType,
+        address: deliveryType === 'delivery' ? address : undefined,
+        paymentMethod,
+        needsCashChange,
+        cashChangeFor,
+        orderNotes,
+      },
+      items,
+      subtotal,
+      deliveryType === 'delivery' ? deliveryFee : 0,
+      currentTotal
+    ).catch((err) => console.warn('Erro ao registrar pedido:', err));
 
     const cleanNumber = storeSettings.whatsappNumber.replace(/\D/g, '');
     const message = generateWhatsAppMessage();

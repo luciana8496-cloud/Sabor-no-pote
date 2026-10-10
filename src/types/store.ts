@@ -98,3 +98,38 @@ export interface StoreSettings {
   isDeliveryAvailable: boolean;
   isPickupAvailable: boolean;
 }
+
+export type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+
+export interface OrderItemRecord {
+  id?: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  configuration?: {
+    size?: string;
+    flavor?: string;
+    extras?: string[];
+    notes?: string;
+  };
+}
+
+export interface OrderRecord {
+  id: string;
+  customerName: string;
+  customerPhone: string;
+  deliveryType: DeliveryType;
+  addressData?: DeliveryAddress | null;
+  paymentMethod: PaymentMethod;
+  needsCashChange?: boolean;
+  cashChangeFor?: number | null;
+  subtotal: number;
+  deliveryFee: number;
+  totalPrice: number;
+  status: OrderStatus;
+  orderNotes?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  items?: OrderItemRecord[];
+}

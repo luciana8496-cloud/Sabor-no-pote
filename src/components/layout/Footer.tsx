@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Logo } from '../brand/Logo';
 import { getStoreSettings } from '../../services/storeService';
 import { StoreSettings } from '../../types/store';
-import { Phone, Instagram, Clock, MapPin, Settings } from 'lucide-react';
+import { Phone, Instagram, Clock, MapPin, Settings, Lock } from 'lucide-react';
 
 interface FooterProps {
   onOpenSettings: () => void;
@@ -182,9 +182,22 @@ export const Footer: React.FC<FooterProps> = ({ onOpenSettings }) => {
           </div>
         </div>
 
-        {/* Linha Divisória e Copyright Obrigatório */}
+        {/* Linha Divisória e Copyright Obrigatório com Acesso Seguro */}
         <div className="mt-12 pt-6 border-t border-[#F0EBE1] flex flex-col sm:flex-row items-center justify-between text-xs text-[#777777] gap-3">
           <p>© Sabor no Pote — Todos os direitos reservados.</p>
+          <a
+            href="#admin"
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.hash = '#admin';
+              window.dispatchEvent(new HashChangeEvent('hashchange'));
+            }}
+            className="inline-flex items-center gap-1.5 text-[11px] text-[#888888] hover:text-[#171717] transition-colors py-1 px-2 rounded-md hover:bg-neutral-100 cursor-pointer"
+            title="Acesso Exclusivo da Proprietária"
+          >
+            <Lock className="w-3 h-3 text-[#FF981B]" />
+            <span>Acesso Administrativo</span>
+          </a>
         </div>
       </div>
     </footer>
