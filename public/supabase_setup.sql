@@ -40,9 +40,9 @@
 --    - A entrega não é aceita no banco até a proprietária habilitar e configurar as condições.
 -- ==============================================================================
 
--- 1. Habilitar extensões necessárias para UUID e criptografia
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- 1. Habilitar extensões necessárias para UUID e criptografia no schema extensions do Supabase
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA extensions;
 
 -- ==============================================================================
 -- 2. TABELA DE ADMINISTRADORES (RBAC / CONTROLE EXCLUSIVO DA PROPRIETÁRIA)
@@ -303,7 +303,7 @@ CREATE OR REPLACE FUNCTION public.submit_order(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public, pg_temp
+SET search_path = pg_catalog, public, extensions, pg_temp
 AS $$
 DECLARE
     -- Variáveis de validação e rate limit
@@ -735,7 +735,7 @@ BEGIN
     -- -------------------------------------------------------------------------
     -- 9. REGISTRO NO LOG DE AUDITORIA CONTRA ABUSOS
     -- -------------------------------------------------------------------------
-    v_phone_hash := encode(digest(v_clean_phone, 'sha256'), 'hex');
+    v_phone_hash := encode(extensions.digest(v_clean_phone, 'sha256'), 'hex');
     INSERT INTO public.order_submission_logs (client_identifier, phone_hash, created_at)
     VALUES (NULLIF(trim(COALESCE(p_client_token, '')), ''), v_phone_hash, now());
 
